@@ -15,12 +15,5 @@ html[data-theme='dark'] {
 }
 
 body {
-  @apply bg-base-100 text-base-content;
-}
-
-.safe-area-inset {
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  @apply bg-base-200 text-base-content;
 }
