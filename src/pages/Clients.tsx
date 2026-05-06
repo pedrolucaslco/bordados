@@ -79,16 +79,14 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      <div className="form-control mb-6">
-        <div className="input-group">
-          <input 
-            type="text" 
-            placeholder="Buscar por nome ou WhatsApp..." 
-            className="input input-bordered w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="join mb-6 w-full">
+        <input 
+          type="text" 
+          placeholder="Buscar por nome ou WhatsApp..." 
+          className="input join-item w-full"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       {isLoading ? (
@@ -124,26 +122,26 @@ export default function ClientsPage() {
               {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
             </h3>
             <form onSubmit={handleSubmit}>
-              <div className="form-control mb-2">
-                <label className="label"><span className="label-text">Nome *</span></label>
-                <input type="text" className="input input-bordered" value={name} onChange={e => setName(e.target.value)} required />
-              </div>
-              <div className="form-control mb-2">
-                <label className="label"><span className="label-text">WhatsApp</span></label>
-                <input type="text" className="input input-bordered" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} />
-              </div>
-              <div className="form-control mb-2">
-                <label className="label"><span className="label-text">Instagram</span></label>
-                <input type="text" className="input input-bordered" value={instagram} onChange={e => setInstagram(e.target.value)} />
-              </div>
-              <div className="form-control mb-2">
-                <label className="label"><span className="label-text">Endereço</span></label>
-                <input type="text" className="input input-bordered" value={address} onChange={e => setAddress(e.target.value)} />
-              </div>
-              <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Observações</span></label>
-                <textarea className="textarea textarea-bordered" value={notes} onChange={e => setNotes(e.target.value)}></textarea>
-              </div>
+              <fieldset className="fieldset mb-2">
+                <label className="label" htmlFor="client-name">Nome *</label>
+                <input id="client-name" type="text" className="input w-full" value={name} onChange={e => setName(e.target.value)} required />
+              </fieldset>
+              <fieldset className="fieldset mb-2">
+                <label className="label" htmlFor="client-whatsapp">WhatsApp</label>
+                <input id="client-whatsapp" type="text" className="input w-full" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} />
+              </fieldset>
+              <fieldset className="fieldset mb-2">
+                <label className="label" htmlFor="client-instagram">Instagram</label>
+                <input id="client-instagram" type="text" className="input w-full" value={instagram} onChange={e => setInstagram(e.target.value)} />
+              </fieldset>
+              <fieldset className="fieldset mb-2">
+                <label className="label" htmlFor="client-address">Endereço</label>
+                <input id="client-address" type="text" className="input w-full" value={address} onChange={e => setAddress(e.target.value)} />
+              </fieldset>
+              <fieldset className="fieldset mb-4">
+                <label className="label" htmlFor="client-notes">Observações</label>
+                <textarea id="client-notes" className="textarea w-full" value={notes} onChange={e => setNotes(e.target.value)}></textarea>
+              </fieldset>
               <div className="modal-action">
                 <button type="button" className="btn" onClick={() => setIsModalOpen(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary">Salvar</button>

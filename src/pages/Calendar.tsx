@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { startOfWeek, endOfWeek, addDays, subWeeks, addWeeks, format, isSameDay, parseISO } from 'date-fns'
+import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useOrdersStore } from '@/stores/orders'
 import { useClientsStore } from '@/stores/clients'
@@ -107,7 +107,7 @@ export default function CalendarPage({ onNavigate }: { onNavigate: (page: string
                         
                         <div className="flex justify-between items-center mt-2">
                           <select 
-                            className="select select-bordered select-xs w-full max-w-xs"
+                            className="select select-xs w-full"
                             value={order.status}
                             onChange={(e) => handleStatusChange(e, order.id)}
                             onClick={(e) => e.stopPropagation()} // Evita abrir o modal do pedido ao clicar no select

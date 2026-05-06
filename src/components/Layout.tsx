@@ -6,6 +6,7 @@ import ProductsPage from '@/pages/Products'
 import OrdersPage from '@/pages/Orders'
 import OrderDetailPage from '@/pages/OrderDetail'
 import CalendarPage from '@/pages/Calendar'
+import SettingsPage from '@/pages/Settings'
 
 export default function Layout() {
   const [currentPage, setCurrentPage] = useState('dashboard')
@@ -79,6 +80,16 @@ export default function Layout() {
               {pendingSyncCount} pendente(s)
             </div>
           )}
+          <button
+            className={`btn btn-ghost btn-circle ${currentPage === 'settings' ? 'btn-active' : ''}`}
+            onClick={() => handleNavigate('settings')}
+            title="Ajustes"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.607 2.296.07 2.572-1.065Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+          </button>
           <button className="btn btn-ghost btn-circle" onClick={handleLogout} title="Sair">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
           </button>
@@ -86,7 +97,7 @@ export default function Layout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-base-200 pb-20">
+      <main className="flex-1 overflow-y-auto bg-base-200 pb-24">
         {currentPage === 'dashboard' && (
           <div className="p-4">
             <h2 className="text-2xl font-bold mb-6">Painel de Controle</h2>
@@ -114,28 +125,15 @@ export default function Layout() {
         {currentPage === 'clients' && <ClientsPage />}
         {currentPage === 'products' && <ProductsPage />}
         {currentPage === 'orders' && <OrdersPage onNavigate={handleNavigate} />}
+        {currentPage === 'settings' && (
+          <SettingsPage section={currentParam} onNavigate={handleNavigate} />
+        )}
         {currentPage === 'order_detail' && currentParam && (
           <OrderDetailPage orderId={currentParam} onBack={() => handleNavigate('orders')} />
         )}
       </main>
 
       {/* Bottom Navigation */}
-<div className="dock">
-  <button>
-    <svg className="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" strokeLinejoin="miter" strokeLinecap="butt"><polyline points="1 11 12 2 23 11" fill="none" stroke="currentColor" stroke-miterlimit="10" strokeWidth="2"></polyline><path d="m5,13v7c0,1.105.895,2,2,2h10c1.105,0,2-.895,2-2v-7" fill="none" stroke="currentColor" strokeLinecap="square" stroke-miterlimit="10" strokeWidth="2"></path><line x1="12" y1="22" x2="12" y2="18" fill="none" stroke="currentColor" strokeLinecap="square" stroke-miterlimit="10" strokeWidth="2"></line></g></svg>
-    <span className="dock-label">Home</span>
-  </button>
-  
-  <button className="dock-active">
-    <svg className="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" strokeLinejoin="miter" strokeLinecap="butt"><polyline points="3 14 9 14 9 17 15 17 15 14 21 14" fill="none" stroke="currentColor" stroke-miterlimit="10" strokeWidth="2"></polyline><rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" strokeLinecap="square" stroke-miterlimit="10" strokeWidth="2"></rect></g></svg>
-    <span className="dock-label">Inbox</span>
-  </button>
-  
-  <button>
-    <svg className="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" strokeLinejoin="miter" strokeLinecap="butt"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeLinecap="square" stroke-miterlimit="10" strokeWidth="2"></circle><path d="m22,13.25v-2.5l-2.318-.966c-.167-.581-.395-1.135-.682-1.654l.954-2.318-1.768-1.768-2.318.954c-.518-.287-1.073-.515-1.654-.682l-.966-2.318h-2.5l-.966,2.318c-.581.167-1.135.395-1.654.682l-2.318-.954-1.768,1.768.954,2.318c-.287.518-.515,1.073-.682,1.654l-2.318.966v2.5l2.318.966c.167.581.395,1.135.682,1.654l-.954,2.318,1.768,1.768,2.318-.954c.518.287,1.073.515,1.654.682l.966,2.318h2.5l.966-2.318c.581-.167,1.135-.395,1.654-.682l2.318.954,1.768-1.768-.954-2.318c.287-.518.515-1.073.682-1.654l2.318-.966Z" fill="none" stroke="currentColor" strokeLinecap="square" stroke-miterlimit="10" strokeWidth="2"></path></g></svg>
-    <span className="dock-label">Settings</span>
-  </button>
-</div>
       <nav className="dock">
         <button
           onClick={() => setCurrentPage('dashboard')}

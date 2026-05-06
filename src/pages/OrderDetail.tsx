@@ -12,7 +12,7 @@ interface OrderDetailPageProps {
 export default function OrderDetailPage({ orderId, onBack }: OrderDetailPageProps) {
   const isNew = orderId === 'new'
   
-  const { orders, orderItems, fetchOrders, fetchOrderItems, addOrder, updateOrder, deleteOrder, addOrderItem, updateOrderItem, deleteOrderItem } = useOrdersStore()
+  const { fetchOrders, fetchOrderItems, addOrder, updateOrder, deleteOrder, addOrderItem, updateOrderItem, deleteOrderItem } = useOrdersStore()
   const { clients, fetchClients } = useClientsStore()
   const { products, fetchData: fetchProducts } = useProductsStore()
 
@@ -214,46 +214,46 @@ export default function OrderDetailPage({ orderId, onBack }: OrderDetailPageProp
           <div className="card-body">
             <h3 className="card-title mb-4">Detalhes do Pedido</h3>
             
-            <div className="form-control mb-4">
-              <label className="label"><span className="label-text">Cliente *</span></label>
-              <select className="select select-bordered w-full" value={clientId} onChange={e => setClientId(e.target.value)}>
+            <fieldset className="fieldset mb-4">
+              <label className="label" htmlFor="order-client">Cliente *</label>
+              <select id="order-client" className="select w-full" value={clientId} onChange={e => setClientId(e.target.value)}>
                 <option value="">Selecione um cliente...</option>
                 {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-            </div>
+            </fieldset>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="form-control">
-                <label className="label"><span className="label-text">Status da Produção</span></label>
-                <select className="select select-bordered" value={status} onChange={e => setStatus(e.target.value as OrderStatus)}>
+              <fieldset className="fieldset">
+                <label className="label" htmlFor="order-status">Status da Produção</label>
+                <select id="order-status" className="select w-full" value={status} onChange={e => setStatus(e.target.value as OrderStatus)}>
                   <option value="quote">Orçamento</option>
                   <option value="awaiting_payment">Aguardando Pagamento</option>
                   <option value="in_production">Em Produção</option>
                   <option value="ready">Pronto</option>
                   <option value="delivered">Entregue</option>
                 </select>
-              </div>
-              <div className="form-control">
-                <label className="label"><span className="label-text">Status Financeiro</span></label>
-                <select className="select select-bordered" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value as PaymentStatus)}>
+              </fieldset>
+              <fieldset className="fieldset">
+                <label className="label" htmlFor="payment-status">Status Financeiro</label>
+                <select id="payment-status" className="select w-full" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value as PaymentStatus)}>
                   <option value="unpaid">Não Pago</option>
                   <option value="deposit_paid">Sinal Pago</option>
                   <option value="paid">Pago</option>
                 </select>
-              </div>
+              </fieldset>
             </div>
 
-            <div className="form-control mb-4">
-              <label className="label"><span className="label-text">Data de Entrega</span></label>
-              <input type="date" className="input input-bordered" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-            </div>
+            <fieldset className="fieldset mb-4">
+              <label className="label" htmlFor="order-due-date">Data de Entrega</label>
+              <input id="order-due-date" type="date" className="input w-full" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label"><span className="label-text">Observações Gerais</span></label>
-              <textarea className="textarea textarea-bordered h-24" value={notes} onChange={e => setNotes(e.target.value)}></textarea>
-            </div>
+            <fieldset className="fieldset">
+              <label className="label" htmlFor="order-notes">Observações Gerais</label>
+              <textarea id="order-notes" className="textarea h-24 w-full" value={notes} onChange={e => setNotes(e.target.value)}></textarea>
+            </fieldset>
           </div>
         </div>
 
@@ -323,39 +323,39 @@ export default function OrderDetailPage({ orderId, onBack }: OrderDetailPageProp
             
             <form onSubmit={handleSaveItem}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Produto *</span></label>
-                  <select className="select select-bordered" value={productId} onChange={e => handleProductSelect(e.target.value)} required>
+                <fieldset className="fieldset">
+                  <label className="label" htmlFor="item-product">Produto *</label>
+                  <select id="item-product" className="select w-full" value={productId} onChange={e => handleProductSelect(e.target.value)} required>
                     <option value="">Selecione...</option>
                     {products.map(p => (
                       <option key={p.id} value={p.id}>{p.name} - R$ {p.base_price}</option>
                     ))}
                   </select>
-                </div>
+                </fieldset>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label"><span className="label-text">Quantidade *</span></label>
-                    <input type="number" min="1" className="input input-bordered" value={quantity} onChange={e => setQuantity(e.target.value)} required />
-                  </div>
-                  <div className="form-control">
-                    <label className="label"><span className="label-text">Preço Unit. (R$) *</span></label>
-                    <input type="number" step="0.01" className="input input-bordered" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} required />
-                  </div>
+                  <fieldset className="fieldset">
+                    <label className="label" htmlFor="item-quantity">Quantidade *</label>
+                    <input id="item-quantity" type="number" min="1" className="input w-full" value={quantity} onChange={e => setQuantity(e.target.value)} required />
+                  </fieldset>
+                  <fieldset className="fieldset">
+                    <label className="label" htmlFor="item-unit-price">Preço Unit. (R$) *</label>
+                    <input id="item-unit-price" type="number" step="0.01" className="input w-full" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} required />
+                  </fieldset>
                 </div>
               </div>
 
               <div className="divider">Personalização (Opcional)</div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Texto a bordar</span></label>
-                  <input type="text" className="input input-bordered" value={embroideryText} onChange={e => setEmbroideryText(e.target.value)} />
-                </div>
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Tema / Desenho</span></label>
-                  <input type="text" className="input input-bordered" value={theme} onChange={e => setTheme(e.target.value)} />
-                </div>
+                <fieldset className="fieldset">
+                  <label className="label" htmlFor="item-embroidery-text">Texto a bordar</label>
+                  <input id="item-embroidery-text" type="text" className="input w-full" value={embroideryText} onChange={e => setEmbroideryText(e.target.value)} />
+                </fieldset>
+                <fieldset className="fieldset">
+                  <label className="label" htmlFor="item-theme">Tema / Desenho</label>
+                  <input id="item-theme" type="text" className="input w-full" value={theme} onChange={e => setTheme(e.target.value)} />
+                </fieldset>
               </div>
 
               <div className="modal-action">

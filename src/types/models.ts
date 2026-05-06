@@ -241,6 +241,7 @@ export interface Payment {
 
 // Sync Queue (local only)
 export type SyncOperation = 'create' | 'update' | 'delete'
+export type SyncStatus = 'pending' | 'synced' | 'error'
 
 export interface SyncQueueItem {
   id: string

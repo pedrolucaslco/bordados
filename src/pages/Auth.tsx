@@ -38,33 +38,31 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Email</span>
-            </label>
+          <fieldset className="fieldset">
+            <label className="label" htmlFor="email">Email</label>
             <input
+              id="email"
               type="email"
               placeholder="seu@email.com"
-              className="input input-bordered"
+              className="input w-full"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-          </div>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Senha</span>
-            </label>
+          <fieldset className="fieldset">
+            <label className="label" htmlFor="password">Senha</label>
             <input
+              id="password"
               type="password"
               placeholder="Sua senha"
-              className="input input-bordered"
+              className="input w-full"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
+          </fieldset>
 
           <button
             type="submit"

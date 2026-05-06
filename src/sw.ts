@@ -1,16 +1,34 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
+import type { PrecacheEntry } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 
 declare const self: ServiceWorkerGlobalScope
+interface ServiceWorkerLifecycleEvent extends Event {
+  waitUntil(promise: Promise<unknown>): void
+}
+
+interface ServiceWorkerFetchEvent extends Event {
+  request: Request
+  respondWith(response: Promise<Response>): void
+}
+
+const serviceWorker = self as unknown as {
+  skipWaiting(): void
+  clients: {
+    claim(): Promise<void>
+  }
+  addEventListener(type: 'activate', listener: (event: ServiceWorkerLifecycleEvent) => void): void
+  addEventListener(type: 'fetch', listener: (event: ServiceWorkerFetchEvent) => void): void
+}
 
 const SW_VERSION = 'v2'
 const CACHE_PREFIX = `my-app-${SW_VERSION}`
 
-self.skipWaiting()
+serviceWorker.skipWaiting()
 
-precacheAndRoute(self.__WB_MANIFEST)
+precacheAndRoute(self.__WB_MANIFEST as Array<string | PrecacheEntry>)
 cleanupOutdatedCaches()
 
 registerRoute(
@@ -40,7 +58,7 @@ registerRoute(
   })
 )
 
-self.addEventListener('activate', (event) => {
+serviceWorker.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) =>
       Promise.all(
@@ -52,13 +70,15 @@ self.addEventListener('activate', (event) => {
     )
   )
 
-  self.clients.claim()
+  serviceWorker.clients.claim()
 })
 
-self.addEventListener('fetch', (event) => {
+serviceWorker.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/index.html'))
+      fetch(event.request).catch(() =>
+        caches.match('/index.html').then((response) => response ?? Response.error())
+      )
     )
   }
 })

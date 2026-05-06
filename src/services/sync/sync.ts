@@ -1,6 +1,7 @@
 import { db } from '@/services/db/schema'
 import { supabaseClient } from '@/services/supabase/client'
 import * as Models from '@/types/models'
+import type { Table } from 'dexie'
 
 // Configuration for sync retry logic
 const MAX_RETRIES = 3
@@ -47,7 +48,7 @@ async function markRecordAsPending(
   tableName: string,
   recordId: string
 ): Promise<void> {
-  const table = (db as any)[tableName] as Dexie.Table
+  const table = (db as any)[tableName] as Table
   if (table && recordId) {
     await table.update(String(recordId), {
       sync_status: 'pending',
@@ -63,7 +64,7 @@ async function markRecordAsSynced(
   tableName: string,
   recordId: string
 ): Promise<void> {
-  const table = (db as any)[tableName] as Dexie.Table
+  const table = (db as any)[tableName] as Table
   if (table && recordId) {
     await table.update(String(recordId), {
       sync_status: 'synced',
@@ -79,7 +80,7 @@ async function markRecordAsError(
   tableName: string,
   recordId: string
 ): Promise<void> {
-  const table = (db as any)[tableName] as Dexie.Table
+  const table = (db as any)[tableName] as Table
   if (table && recordId) {
     await table.update(String(recordId), {
       sync_status: 'error',
@@ -265,7 +266,7 @@ export async function syncFromRemote(
     if (error) throw error
     if (!data) return
 
-    const table = (db as any)[tableName] as Dexie.Table
+    const table = (db as any)[tableName] as Table
 
     // Merge strategy: if record doesn't exist locally, add it
     // If it exists and is not marked as pending, update if remote is newer

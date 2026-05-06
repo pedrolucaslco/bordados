@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useProductsStore } from '@/stores/products'
-import type { Product, ProductCategory } from '@/types/models'
+import type { Product } from '@/types/models'
 
 export default function ProductsPage() {
   const { products, categories, isLoading, fetchData, addProduct, updateProduct, deleteProduct, addCategory } = useProductsStore()
@@ -148,44 +148,44 @@ export default function ProductsPage() {
               {editingProduct ? 'Editar Produto' : 'Novo Produto'}
             </h3>
             <form onSubmit={handleProductSubmit}>
-              <div className="form-control mb-2">
-                <label className="label"><span className="label-text">Nome *</span></label>
-                <input type="text" className="input input-bordered" value={name} onChange={e => setName(e.target.value)} required />
-              </div>
+              <fieldset className="fieldset mb-2">
+                <label className="label" htmlFor="product-name">Nome *</label>
+                <input id="product-name" type="text" className="input w-full" value={name} onChange={e => setName(e.target.value)} required />
+              </fieldset>
               
               <div className="grid grid-cols-2 gap-4 mb-2">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Categoria</span></label>
-                  <select className="select select-bordered" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
+                <fieldset className="fieldset">
+                  <label className="label" htmlFor="product-category">Categoria</label>
+                  <select id="product-category" className="select w-full" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
                     <option value="">Selecione...</option>
                     {categories.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                </div>
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Preço Base (R$) *</span></label>
-                  <input type="number" step="0.01" className="input input-bordered" value={basePrice} onChange={e => setBasePrice(e.target.value)} required />
-                </div>
+                </fieldset>
+                <fieldset className="fieldset">
+                  <label className="label" htmlFor="product-base-price">Preço Base (R$) *</label>
+                  <input id="product-base-price" type="number" step="0.01" className="input w-full" value={basePrice} onChange={e => setBasePrice(e.target.value)} required />
+                </fieldset>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-2">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Variação/Tamanho</span></label>
-                  <input type="text" className="input input-bordered" value={variation} onChange={e => setVariation(e.target.value)} />
-                </div>
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Tempo Prod. (dias)</span></label>
-                  <input type="number" className="input input-bordered" value={avgProductionDays} onChange={e => setAvgProductionDays(e.target.value)} />
-                </div>
+                <fieldset className="fieldset">
+                  <label className="label" htmlFor="product-variation">Variação/Tamanho</label>
+                  <input id="product-variation" type="text" className="input w-full" value={variation} onChange={e => setVariation(e.target.value)} />
+                </fieldset>
+                <fieldset className="fieldset">
+                  <label className="label" htmlFor="product-production-days">Tempo Prod. (dias)</label>
+                  <input id="product-production-days" type="number" className="input w-full" value={avgProductionDays} onChange={e => setAvgProductionDays(e.target.value)} />
+                </fieldset>
               </div>
 
-              <div className="form-control mb-4">
+              <fieldset className="fieldset mb-4">
                 <label className="label cursor-pointer justify-start gap-4">
-                  <span className="label-text">Produto Ativo</span> 
+                  <span>Produto Ativo</span> 
                   <input type="checkbox" className="toggle toggle-primary" checked={isActive} onChange={e => setIsActive(e.target.checked)} />
                 </label>
-              </div>
+              </fieldset>
 
               <div className="modal-action">
                 <button type="button" className="btn" onClick={() => setIsModalOpen(false)}>Cancelar</button>
@@ -202,10 +202,10 @@ export default function ProductsPage() {
           <div className="modal-box">
             <h3 className="font-bold text-lg mb-4">Nova Categoria</h3>
             <form onSubmit={handleCategorySubmit}>
-              <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Nome da Categoria *</span></label>
-                <input type="text" className="input input-bordered" value={categoryName} onChange={e => setCategoryName(e.target.value)} required />
-              </div>
+              <fieldset className="fieldset mb-4">
+                <label className="label" htmlFor="category-name">Nome da Categoria *</label>
+                <input id="category-name" type="text" className="input w-full" value={categoryName} onChange={e => setCategoryName(e.target.value)} required />
+              </fieldset>
               <div className="modal-action">
                 <button type="button" className="btn" onClick={() => setIsCategoryModalOpen(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary">Adicionar</button>
