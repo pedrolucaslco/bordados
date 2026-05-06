@@ -58,9 +58,9 @@ export default function Layout() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-base-100">
+    <div className="flex flex-col h-screen bg-base-200">
       {/* Header */}
-      <header className="navbar bg-primary text-primary-content shadow-sm z-50">
+      <header className="navbar border-b-base-300 z-50">
         <div className="flex-1">
           <a className="btn btn-ghost text-xl normal-case">Bordados</a>
         </div>
@@ -74,9 +74,9 @@ export default function Layout() {
             </div>
           )}
           {pendingSyncCount > 0 && (
-            <div className="badge badge-info gap-1">
+            <div className="badge badge-neutral gap-1">
               <span className="loading loading-spinner loading-xs"></span>
-              {pendingSyncCount} pendente
+              {pendingSyncCount} pendente(s)
             </div>
           )}
           <button className="btn btn-ghost btn-circle" onClick={handleLogout} title="Sair">
