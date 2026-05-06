@@ -109,7 +109,7 @@ export default function ProductsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map(product => (
-            <div key={product.id} className="card bg-base-100 shadow-xl">
+            <div key={product.id} className="card bg-base-100 border border-base-300">
               <div className="card-body">
                 <div className="flex justify-between items-start">
                   <h2 className="card-title">{product.name}</h2>
