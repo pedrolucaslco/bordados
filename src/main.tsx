@@ -5,8 +5,15 @@ import App from './App.tsx'
 import './styles/index.css'
 
 const storedTheme = localStorage.getItem('bordados-theme')
-if (storedTheme === 'light' || storedTheme === 'dark') {
-  document.documentElement.setAttribute('data-theme', storedTheme)
+const themeAliases: Record<string, string> = {
+  light: 'autumn',
+  dark: 'sunset',
+  autumn: 'autumn',
+  sunset: 'sunset',
+}
+
+if (storedTheme && themeAliases[storedTheme]) {
+  document.documentElement.setAttribute('data-theme', themeAliases[storedTheme])
 }
 
 // Register service worker

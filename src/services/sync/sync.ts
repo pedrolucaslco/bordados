@@ -150,10 +150,12 @@ async function processSyncItem(item: Models.SyncQueueItem): Promise<boolean> {
 
     switch (operation) {
       case 'create': {
-        console.log(`[SYNC] Executando CREATE para ${table}...`, remotePayload)
-        const { error: insertError } = await supabaseClient.from(table).insert([remotePayload])
+        console.log(`[SYNC] Executando UPSERT de CREATE para ${table}...`, remotePayload)
+        const { error: insertError } = await supabaseClient
+          .from(table)
+          .upsert([remotePayload], { onConflict: 'id' })
         if (insertError) {
-          console.error(`[SYNC] Erro no INSERT: ${insertError.message}`)
+          console.error(`[SYNC] Erro no UPSERT: ${insertError.message}`)
           throw new Error(insertError.message)
         }
         break
@@ -263,6 +265,24 @@ export async function processSyncQueue(): Promise<SyncResult> {
             updated_at: new Date().toISOString(),
           })
         )
+    )
+
+    const duplicateKeyErrorItems = await db.sync_queue
+      .where('status')
+      .equals('error')
+      .filter(item => item.error_message?.includes('duplicate key value') ?? false)
+      .toArray()
+
+    await Promise.all(
+      duplicateKeyErrorItems.map(async item => {
+        await db.sync_queue.update(item.id, {
+          status: 'pending',
+          error_message: null,
+          retry_count: 0,
+          updated_at: new Date().toISOString(),
+        })
+        await markRecordAsPending(item.table_name, item.record_id)
+      })
     )
 
     const pendingItems = await db.sync_queue

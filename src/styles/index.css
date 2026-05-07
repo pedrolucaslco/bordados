@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
+  themes: autumn --default, sunset --prefersdark;
 }
 
 @theme {
@@ -12,7 +12,7 @@
   color-scheme: light;
 }
 
-html[data-theme='dark'] {
+html[data-theme='sunset'] {
   color-scheme: dark;
 }
 

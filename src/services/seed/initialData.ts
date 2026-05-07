@@ -17,7 +17,25 @@ function makeBaseRecord(userId: string) {
   }
 }
 
+function getSeedDisabledKey(userId: string) {
+  return `bordados-disable-initial-seed:${userId}`
+}
+
+export function setInitialDataSeedDisabled(userId: string, disabled: boolean): void {
+  if (disabled) {
+    localStorage.setItem(getSeedDisabledKey(userId), 'true')
+  } else {
+    localStorage.removeItem(getSeedDisabledKey(userId))
+  }
+}
+
+export function isInitialDataSeedDisabled(userId: string): boolean {
+  return localStorage.getItem(getSeedDisabledKey(userId)) === 'true'
+}
+
 export async function ensureInitialData(userId: string): Promise<void> {
+  if (isInitialDataSeedDisabled(userId)) return
+
   const [categoryCount, productCount, productionStepCount, materialCategoryCount] = await Promise.all([
     db.product_categories.where('user_id').equals(userId).filter(item => !item.deleted_at).count(),
     db.products.where('user_id').equals(userId).filter(item => !item.deleted_at).count(),

@@ -2,6 +2,14 @@ export function todayLocalDate(): string {
   return toLocalDateInputValue(new Date())
 }
 
+export function addLocalDays(value: string | Date, days: number): string {
+  const baseDate = value instanceof Date ? value : parseLocalDate(value)
+  if (!baseDate) return ''
+  const nextDate = new Date(baseDate)
+  nextDate.setDate(nextDate.getDate() + days)
+  return toLocalDateInputValue(nextDate)
+}
+
 export function toLocalDateInputValue(value?: string | Date | null): string {
   if (!value) return ''
   if (value instanceof Date) {

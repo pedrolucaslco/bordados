@@ -80,7 +80,7 @@ export default function Layout() {
           {pendingSyncCount > 0 && (
             <div className="badge badge-neutral gap-1">
               <span className="loading loading-spinner loading-xs"></span>
-              {pendingSyncCount} pendente(s)
+              {pendingSyncCount} sincronizando
             </div>
           )}
           <button
