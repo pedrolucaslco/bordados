@@ -134,12 +134,28 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
 
   deleteCategory: async (id) => {
     const now = new Date().toISOString()
+    const productsInCategory = await db.products
+      .where('category_id')
+      .equals(id)
+      .filter(product => !product.deleted_at)
+      .toArray()
     
     await db.product_categories.update(id, {
       deleted_at: now,
       updated_at: now,
       sync_status: 'pending'
     })
+    await Promise.all(productsInCategory.map(async product => {
+      await db.products.update(product.id, {
+        category_id: null,
+        updated_at: now,
+        sync_status: 'pending',
+      })
+      const updatedProduct = await db.products.get(product.id)
+      if (updatedProduct) {
+        await addToSyncQueue('products', product.id, 'update', updatedProduct)
+      }
+    }))
 
     await addToSyncQueue('product_categories', id, 'delete', null)
 

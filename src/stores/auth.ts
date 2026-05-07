@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabaseClient } from '@/services/supabase/client'
 import { pullInitialData, clearLocalDatabase } from '@/services/sync/pull'
+import { ensureInitialData } from '@/services/seed/initialData'
 
 interface AuthState {
   userId: string | null
@@ -29,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
             data: { user },
           } = await supabaseClient.auth.getUser()
           if (user) {
+            await ensureInitialData(user.id)
             set({
               userId: user.id,
               email: user.email || null,
@@ -64,6 +66,7 @@ export const useAuthStore = create<AuthState>()(
           if (data.user) {
             // Pull initial data before setting as authenticated
             await pullInitialData(data.user.id)
+            await ensureInitialData(data.user.id)
             
             set({
               userId: data.user.id,
@@ -106,6 +109,7 @@ export const useAuthStore = create<AuthState>()(
           })
           if (error) throw error
           if (data.user) {
+            await ensureInitialData(data.user.id)
             set({
               userId: data.user.id,
               email: data.user.email || null,

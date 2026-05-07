@@ -1,12 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useProductsStore } from '@/stores/products'
-import type { Product } from '@/types/models'
+import type { Product, ProductCategory } from '@/types/models'
 
 export default function ProductsPage() {
-  const { products, categories, isLoading, fetchData, addProduct, updateProduct, deleteProduct, addCategory } = useProductsStore()
+  const {
+    products,
+    categories,
+    isLoading,
+    fetchData,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+  } = useProductsStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null)
 
   // Form state - Product
   const [name, setName] = useState('')
@@ -74,9 +86,31 @@ export default function ProductsPage() {
     e.preventDefault()
     if (!categoryName.trim()) return
 
-    await addCategory({ name: categoryName })
+    if (editingCategory) {
+      await updateCategory(editingCategory.id, { name: categoryName.trim() })
+    } else {
+      await addCategory({ name: categoryName.trim() })
+    }
     setCategoryName('')
+    setEditingCategory(null)
     setIsCategoryModalOpen(false)
+  }
+
+  const openCategoryModal = (category?: ProductCategory) => {
+    setEditingCategory(category || null)
+    setCategoryName(category?.name || '')
+    setIsCategoryModalOpen(true)
+  }
+
+  const handleDeleteCategory = async (category: ProductCategory) => {
+    const productsUsingCategory = products.filter(product => product.category_id === category.id).length
+    const message = productsUsingCategory > 0
+      ? `Excluir esta categoria? ${productsUsingCategory} produto(s) ficarao sem categoria.`
+      : 'Tem certeza que deseja excluir esta categoria?'
+
+    if (confirm(message)) {
+      await deleteCategory(category.id)
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -95,12 +129,30 @@ export default function ProductsPage() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Produtos</h2>
         <div className="flex gap-2">
-          <button className="btn btn-outline" onClick={() => setIsCategoryModalOpen(true)}>
+          <button className="btn btn-outline" onClick={() => openCategoryModal()}>
             + Categoria
           </button>
           <button className="btn btn-primary" onClick={() => openModal()}>
             Novo Produto
           </button>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-2">
+          {categories.map(category => (
+            <div key={category.id} className="join">
+              <button className="btn btn-sm join-item" onClick={() => openCategoryModal(category)}>
+                {category.name}
+              </button>
+              <button className="btn btn-sm btn-error btn-outline join-item" onClick={() => handleDeleteCategory(category)}>
+                Excluir
+              </button>
+            </div>
+          ))}
+          {categories.length === 0 && (
+            <span className="text-sm text-base-content/60">Nenhuma categoria cadastrada.</span>
+          )}
         </div>
       </div>
 
@@ -200,7 +252,9 @@ export default function ProductsPage() {
       {isCategoryModalOpen && (
         <div className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Nova Categoria</h3>
+            <h3 className="font-bold text-lg mb-4">
+              {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+            </h3>
             <form onSubmit={handleCategorySubmit}>
               <fieldset className="fieldset mb-4">
                 <label className="label" htmlFor="category-name">Nome da Categoria *</label>
@@ -208,7 +262,7 @@ export default function ProductsPage() {
               </fieldset>
               <div className="modal-action">
                 <button type="button" className="btn" onClick={() => setIsCategoryModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">Adicionar</button>
+                <button type="submit" className="btn btn-primary">Salvar</button>
               </div>
             </form>
           </div>

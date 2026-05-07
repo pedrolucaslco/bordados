@@ -22,6 +22,27 @@ export async function addToSyncQueue(
   operation: Models.SyncOperation,
   payload: any
 ): Promise<void> {
+  const existingPending = await db.sync_queue
+    .where('record_id')
+    .equals(recordId)
+    .filter((item) =>
+      item.table_name === tableName &&
+      item.operation === operation &&
+      (item.status === 'pending' || item.status === 'processing')
+    )
+    .last()
+
+  if (existingPending) {
+    await db.sync_queue.update(existingPending.id, {
+      payload,
+      status: 'pending',
+      error_message: null,
+      updated_at: new Date().toISOString(),
+    })
+    await markRecordAsPending(tableName, recordId)
+    return
+  }
+
   const id = `${Date.now()}-${Math.random()}`
 
   await db.sync_queue.add({
@@ -119,8 +140,13 @@ async function processSyncItem(item: Models.SyncQueueItem): Promise<boolean> {
     const { operation, payload } = item
 
     // Remove local-only fields from payload before sending to Supabase
-    const remotePayload = { ...payload }
-    delete remotePayload.sync_status
+    const remotePayload = payload ? { ...payload } : null
+    if (!remotePayload && operation !== 'delete') {
+      throw new Error(`Missing payload for ${operation} on ${table}/${recordId}`)
+    }
+    if (remotePayload) {
+      delete remotePayload.sync_status
+    }
 
     switch (operation) {
       case 'create': {
@@ -217,10 +243,31 @@ async function processSyncItem(item: Models.SyncQueueItem): Promise<boolean> {
  */
 export async function processSyncQueue(): Promise<SyncResult> {
   try {
+    if (!navigator.onLine) {
+      return { success: true, itemsProcessed: 0 }
+    }
+
     console.log('[SYNC] Iniciando processamento da fila...')
+    const staleProcessingCutoff = Date.now() - 5 * 60 * 1000
+    const processingItems = await db.sync_queue
+      .where('status')
+      .equals('processing')
+      .toArray()
+
+    await Promise.all(
+      processingItems
+        .filter(item => new Date(item.updated_at).getTime() < staleProcessingCutoff)
+        .map(item =>
+          db.sync_queue.update(item.id, {
+            status: 'pending',
+            updated_at: new Date().toISOString(),
+          })
+        )
+    )
+
     const pendingItems = await db.sync_queue
       .where('status')
-      .anyOf(['pending', 'error', 'processing'])
+      .equals('pending')
       .toArray()
 
     console.log(`[SYNC] Encontrados ${pendingItems.length} itens para sincronizar.`)

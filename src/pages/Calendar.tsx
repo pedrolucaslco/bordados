@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
-import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay, parseISO } from 'date-fns'
+import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useOrdersStore } from '@/stores/orders'
 import { useClientsStore } from '@/stores/clients'
 import type { OrderStatus } from '@/types/models'
+import { formatLocalDate, isBeforeToday, isSameLocalDate } from '@/utils/date'
 
 export default function CalendarPage({ onNavigate }: { onNavigate: (page: string, orderId?: string) => void }) {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [viewMode, setViewMode] = useState<'week' | 'day' | 'list'>('week')
   
   const { orders, fetchOrders, updateOrder } = useOrdersStore()
   const { clients, fetchClients } = useClientsStore()
@@ -48,6 +50,54 @@ export default function CalendarPage({ onNavigate }: { onNavigate: (page: string
     }
   }
 
+  const getOrdersForDay = (day: Date) => {
+    return orders.filter(order => isSameLocalDate(order.due_date, day))
+  }
+
+  const renderOrderCard = (order: typeof orders[number], compact = false) => {
+    const overdue = !['delivered', 'cancelled'].includes(order.status) && isBeforeToday(order.due_date)
+    return (
+      <div 
+        key={order.id} 
+        className={`card bg-base-100 shadow-sm border border-base-200 cursor-pointer hover:shadow-md transition-shadow ${getStatusColor(order.status)}`}
+        onClick={() => onNavigate('order_detail', order.id)}
+      >
+        <div className="p-3">
+          <div className="flex justify-between items-start gap-2 mb-1">
+            <h4 className="font-bold text-sm leading-tight line-clamp-2">
+              {getClientName(order.client_id)}
+            </h4>
+            {!compact && <span className="text-xs opacity-70">#{order.id.slice(0, 5)}</span>}
+          </div>
+
+          <div className="flex flex-wrap gap-1 mb-2">
+            {overdue && <span className="badge badge-error badge-outline badge-sm">Atrasado</span>}
+            {order.payment_status !== 'paid' && <span className="badge badge-warning badge-outline badge-sm">Pagamento</span>}
+            {compact && order.due_date && <span className="badge badge-ghost badge-sm">{formatLocalDate(order.due_date)}</span>}
+          </div>
+          
+          <select 
+            className="select select-xs w-full"
+            value={order.status}
+            onChange={(e) => handleStatusChange(e, order.id)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <option value="quote">Orçamento</option>
+            <option value="awaiting_payment">Aguardando Pagamento</option>
+            <option value="in_production">Em Produção</option>
+            <option value="ready">Pronto</option>
+            <option value="delivered">Entregue</option>
+          </select>
+        </div>
+      </div>
+    )
+  }
+
+  const currentDayOrders = getOrdersForDay(currentDate)
+  const listOrders = orders
+    .filter(order => order.due_date)
+    .sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)))
+
   return (
     <div className="flex flex-col h-full bg-base-200">
       {/* Header da Agenda */}
@@ -62,23 +112,30 @@ export default function CalendarPage({ onNavigate }: { onNavigate: (page: string
             <button className="btn btn-sm join-item" onClick={handleNextWeek}>&gt;</button>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => onNavigate('order_detail', 'new')}>
-          + Pedido
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="join hidden md:inline-flex">
+            <button className={`btn btn-sm join-item ${viewMode === 'week' ? 'btn-active' : ''}`} onClick={() => setViewMode('week')}>Semana</button>
+            <button className={`btn btn-sm join-item ${viewMode === 'day' ? 'btn-active' : ''}`} onClick={() => setViewMode('day')}>Dia</button>
+            <button className={`btn btn-sm join-item ${viewMode === 'list' ? 'btn-active' : ''}`} onClick={() => setViewMode('list')}>Lista</button>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => onNavigate('order_detail', 'new')}>
+            + Pedido
+          </button>
+        </div>
+      </div>
+
+      <div className="join mx-4 mt-4 md:hidden">
+        <button className={`btn btn-sm join-item flex-1 ${viewMode === 'week' ? 'btn-active' : ''}`} onClick={() => setViewMode('week')}>Semana</button>
+        <button className={`btn btn-sm join-item flex-1 ${viewMode === 'day' ? 'btn-active' : ''}`} onClick={() => setViewMode('day')}>Dia</button>
+        <button className={`btn btn-sm join-item flex-1 ${viewMode === 'list' ? 'btn-active' : ''}`} onClick={() => setViewMode('list')}>Lista</button>
       </div>
 
       {/* Grid Semanal */}
-      <div className="flex-1 overflow-x-auto p-4 pb-24">
+      {viewMode === 'week' && <div className="flex-1 overflow-x-auto p-4 pb-24">
         <div className="flex gap-4 min-w-[800px] h-full">
           {weekDays.map(day => {
             const isToday = isSameDay(day, new Date())
-            
-            // Filtrar pedidos para este dia
-            const dayOrders = orders.filter(order => {
-              if (!order.due_date) return false
-              const dueDate = parseISO(order.due_date)
-              return isSameDay(dueDate, day)
-            })
+            const dayOrders = getOrdersForDay(day)
 
             return (
               <div key={day.toISOString()} className="flex-1 flex flex-col min-w-[200px] bg-base-100 rounded-box shadow-sm overflow-hidden border border-base-300">
@@ -91,36 +148,7 @@ export default function CalendarPage({ onNavigate }: { onNavigate: (page: string
                 {/* Lista de Pedidos (Cards) */}
                 <div className="flex-1 p-2 overflow-y-auto flex flex-col gap-2">
                   {dayOrders.map(order => (
-                    <div 
-                      key={order.id} 
-                      className={`card bg-base-100 shadow-sm border border-base-200 cursor-pointer hover:shadow-md transition-shadow ${getStatusColor(order.status)}`}
-                      onClick={() => onNavigate('order_detail', order.id)}
-                    >
-                      <div className="p-3">
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className="font-bold text-sm leading-tight line-clamp-2">
-                            {getClientName(order.client_id)}
-                          </h4>
-                        </div>
-                        
-                        <div className="text-xs opacity-70 mb-2">#{order.id.slice(0, 5)}</div>
-                        
-                        <div className="flex justify-between items-center mt-2">
-                          <select 
-                            className="select select-xs w-full"
-                            value={order.status}
-                            onChange={(e) => handleStatusChange(e, order.id)}
-                            onClick={(e) => e.stopPropagation()} // Evita abrir o modal do pedido ao clicar no select
-                          >
-                            <option value="quote">Orçamento</option>
-                            <option value="awaiting_payment">Aguardando Pagamento</option>
-                            <option value="in_production">Em Produção</option>
-                            <option value="ready">Pronto</option>
-                            <option value="delivered">Entregue</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
+                    renderOrderCard(order)
                   ))}
                   
                   {dayOrders.length === 0 && (
@@ -133,7 +161,26 @@ export default function CalendarPage({ onNavigate }: { onNavigate: (page: string
             )
           })}
         </div>
-      </div>
+      </div>}
+
+      {viewMode === 'day' && (
+        <div className="p-4 pb-24 space-y-3">
+          <h3 className="font-bold capitalize">{format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</h3>
+          {currentDayOrders.map(order => renderOrderCard(order, true))}
+          {currentDayOrders.length === 0 && (
+            <div className="text-center py-12 text-base-content/60">Sem entregas neste dia.</div>
+          )}
+        </div>
+      )}
+
+      {viewMode === 'list' && (
+        <div className="p-4 pb-24 space-y-3">
+          {listOrders.map(order => renderOrderCard(order, true))}
+          {listOrders.length === 0 && (
+            <div className="text-center py-12 text-base-content/60">Nenhuma entrega agendada.</div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

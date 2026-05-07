@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { db } from '@/services/db/schema'
 import { addToSyncQueue } from '@/services/sync/sync'
+import { recalculateOrderFinancials } from '@/services/orders/financials'
 import type { Order, OrderItem } from '@/types/models'
 import { useAuthStore } from '@/stores/auth'
 
@@ -16,6 +17,7 @@ interface OrdersState {
   addOrder: (order: Omit<Order, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<string>
   updateOrder: (id: string, order: Partial<Order>) => Promise<void>
   deleteOrder: (id: string) => Promise<void>
+  recalculateOrderFinancials: (id: string) => Promise<Order | null>
   
   addOrderItem: (item: Omit<OrderItem, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>
   updateOrderItem: (id: string, item: Partial<OrderItem>) => Promise<void>
@@ -80,9 +82,13 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
 
   updateOrder: async (id, orderData) => {
     const now = new Date().toISOString()
+    const currentOrder = await db.orders.get(id)
+    const nextTotal = orderData.total_amount ?? currentOrder?.total_amount ?? 0
+    const nextPaid = orderData.paid_amount ?? currentOrder?.paid_amount ?? 0
     
     await db.orders.update(id, {
       ...orderData,
+      remaining_amount: Math.max(nextTotal - nextPaid, 0),
       updated_at: now,
       sync_status: 'pending'
     })
@@ -127,6 +133,7 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
 
     await db.order_items.add(newItem)
     await addToSyncQueue('order_items', id, 'create', newItem)
+    await recalculateOrderFinancials(newItem.order_id)
   },
 
   updateOrderItem: async (id, itemData) => {
@@ -141,12 +148,15 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     const updatedItem = await db.order_items.get(id)
     if (updatedItem) {
       await addToSyncQueue('order_items', id, 'update', updatedItem)
+      await recalculateOrderFinancials(updatedItem.order_id)
     }
   },
 
   deleteOrderItem: async (id) => {
     const now = new Date().toISOString()
     
+    const existingItem = await db.order_items.get(id)
+
     await db.order_items.update(id, {
       deleted_at: now,
       updated_at: now,
@@ -154,5 +164,14 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     })
 
     await addToSyncQueue('order_items', id, 'delete', null)
+    if (existingItem) {
+      await recalculateOrderFinancials(existingItem.order_id)
+    }
+  },
+
+  recalculateOrderFinancials: async (id) => {
+    const order = await recalculateOrderFinancials(id)
+    await get().fetchOrders()
+    return order
   }
 }))

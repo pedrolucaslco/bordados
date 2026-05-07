@@ -26,13 +26,25 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) return
 
+    const syncNow = () => {
+      processSyncQueue().catch((error) =>
+        console.error('Online sync failed:', error)
+      )
+    }
+
+    window.addEventListener('online', syncNow)
+    syncNow()
+
     const syncInterval = setInterval(() => {
       processSyncQueue().catch((error) =>
         console.error('Auto-sync failed:', error)
       )
     }, 30000)
 
-    return () => clearInterval(syncInterval)
+    return () => {
+      window.removeEventListener('online', syncNow)
+      clearInterval(syncInterval)
+    }
   }, [isAuthenticated])
 
   if (isInitializing) {

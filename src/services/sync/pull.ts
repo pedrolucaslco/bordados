@@ -1,6 +1,6 @@
 import { db } from '../db/schema'
 import { supabaseClient } from '../supabase/client'
-import { SyncStatus } from '@/types/models'
+import type { SyncStatus } from '@/types/models'
 
 export async function clearLocalDatabase() {
   console.log('[SYNC] Cleaning local database...')
@@ -61,11 +61,22 @@ export async function pullInitialData(userId: string) {
         sync_status: 'synced' as SyncStatus
       }))
       
-      // @ts-ignore - dynamic table access
-      const table = db[result.tableName]
+      const table = db.table(result.tableName)
       if (table) {
-        await table.bulkPut(items)
-        totalPulled += items.length
+        let savedCount = 0
+        for (const item of items) {
+          const existingLocal = await table.get(item.id)
+          if (
+            existingLocal?.sync_status === 'pending' ||
+            existingLocal?.sync_status === 'error'
+          ) {
+            continue
+          }
+
+          await table.put(item)
+          savedCount++
+        }
+        totalPulled += savedCount
       }
     }
   }
