@@ -98,7 +98,7 @@ export default function Layout() {
   return (
     <div className="app-shell flex flex-col bg-base-300">
       {/* Header */}
-      <header className="app-header navbar border-b border-b-base-300 z-50">
+      <header className="app-header navbar border-b z-50">
         <div className="flex-1">
           {isMoreSubPage ? (
             <button className="btn btn-ghost gap-2 normal-case" onClick={() => handleNavigate('more')}>
