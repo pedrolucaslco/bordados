@@ -42,12 +42,12 @@ body {
 }
 
 .main-content-bg, .navbar {
-  @apply bg-base-200;
+  @apply bg-base-200 border-b-base-300;
 }
 
 html[data-theme='sunset'] .main-content-bg,
 html[data-theme='sunset'] .navbar {
-  @apply bg-base-300;
+  @apply bg-base-300 border-b-base-200;
 }
 
 .page-transition {
