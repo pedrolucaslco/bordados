@@ -10,10 +10,29 @@ import OrdersPage from '@/pages/Orders'
 import OrderDetailPage from '@/pages/OrderDetail'
 import CalendarPage from '@/pages/Calendar'
 import SettingsPage from '@/pages/Settings'
+import MorePage from '@/pages/More'
+
+type TransitionDirection = 'forward' | 'back' | 'neutral'
+
+function getRoutePosition(page: string, param?: string): number {
+  if (page === 'dashboard') return 0
+  if (page === 'calendar') return 1
+  if (page === 'orders') return 2
+  if (page === 'order_detail') return 2.5
+  if (page === 'more') return 3
+  if (page === 'production') return 4
+  if (page === 'inventory') return 4.1
+  if (page === 'clients') return 4.2
+  if (page === 'products') return 4.3
+  if (page === 'settings' && param) return 4.5
+  if (page === 'settings') return 4.4
+  return 3
+}
 
 export default function Layout() {
   const [currentPage, setCurrentPage] = useState('dashboard')
   const [currentParam, setCurrentParam] = useState<string | undefined>()
+  const [transitionDirection, setTransitionDirection] = useState<TransitionDirection>('neutral')
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [pendingSyncCount, setPendingSyncCount] = useState(0)
   const { logout } = useAuthStore()
@@ -57,16 +76,38 @@ export default function Layout() {
   }
 
   const handleNavigate = (page: string, param?: string) => {
+    const currentPosition = getRoutePosition(currentPage, currentParam)
+    const nextPosition = getRoutePosition(page, param)
+    const nextDirection = nextPosition > currentPosition
+      ? 'forward'
+      : nextPosition < currentPosition
+        ? 'back'
+        : 'neutral'
+
+    setTransitionDirection(nextDirection)
     setCurrentPage(page)
     setCurrentParam(param)
   }
 
+  const moreSubPages = ['production', 'inventory', 'clients', 'products', 'settings']
+  const isMoreSubPage = moreSubPages.includes(currentPage)
+  const isMoreActive = currentPage === 'more' || isMoreSubPage
+
   return (
-    <div className="flex flex-col h-screen bg-base-200">
+    <div className="flex flex-col h-screen bg-base-300">
       {/* Header */}
-      <header className="navbar border-b-base-300 z-50">
+      <header className="navbar border-b border-b-base-300 z-50">
         <div className="flex-1">
-          <a className="btn btn-ghost text-xl normal-case">Bordados</a>
+          {isMoreSubPage ? (
+            <button className="btn btn-ghost gap-2 normal-case" onClick={() => handleNavigate('more')}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19 3 12m0 0 7-7m-7 7h18" />
+              </svg>
+              Voltar
+            </button>
+          ) : (
+            <a className="btn btn-ghost text-xl normal-case">Bordados</a>
+          )}
         </div>
         <div className="flex-none gap-2">
           {!isOnline && (
@@ -83,40 +124,39 @@ export default function Layout() {
               {pendingSyncCount} sincronizando
             </div>
           )}
-          <button
-            className={`btn btn-ghost btn-circle ${currentPage === 'settings' ? 'btn-active' : ''}`}
-            onClick={() => handleNavigate('settings')}
-            title="Ajustes"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.607 2.296.07 2.572-1.065Z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
-          </button>
-          <button className="btn btn-ghost btn-circle" onClick={handleLogout} title="Sair">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-base-200 pb-24">
-        {currentPage === 'dashboard' && (
-          <DashboardPage onNavigate={handleNavigate} />
-        )}
-        
-        {currentPage === 'calendar' && <CalendarPage onNavigate={handleNavigate} />}
-        {currentPage === 'clients' && <ClientsPage />}
-        {currentPage === 'products' && <ProductsPage />}
-        {currentPage === 'orders' && <OrdersPage onNavigate={handleNavigate} />}
-        {currentPage === 'production' && <ProductionPage onNavigate={handleNavigate} />}
-        {currentPage === 'inventory' && <InventoryPage />}
-        {currentPage === 'settings' && (
-          <SettingsPage section={currentParam} onNavigate={handleNavigate} />
-        )}
-        {currentPage === 'order_detail' && currentParam && (
-          <OrderDetailPage orderId={currentParam} onBack={() => handleNavigate('orders')} />
-        )}
+      <main className="main-content-bg flex-1 overflow-y-auto pb-24">
+        <div
+          key={`${currentPage}-${currentParam || ''}`}
+          className={`page-transition page-transition-${transitionDirection} min-h-full`}
+        >
+          {currentPage === 'dashboard' && (
+            <DashboardPage onNavigate={handleNavigate} />
+          )}
+          
+          {currentPage === 'calendar' && <CalendarPage onNavigate={handleNavigate} />}
+          {currentPage === 'clients' && <ClientsPage />}
+          {currentPage === 'products' && <ProductsPage />}
+          {currentPage === 'orders' && <OrdersPage onNavigate={handleNavigate} />}
+          {currentPage === 'production' && <ProductionPage onNavigate={handleNavigate} />}
+          {currentPage === 'inventory' && <InventoryPage />}
+          {currentPage === 'more' && (
+            <MorePage
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              isLogoutDisabled={pendingSyncCount > 0}
+            />
+          )}
+          {currentPage === 'settings' && (
+            <SettingsPage section={currentParam} onNavigate={handleNavigate} />
+          )}
+          {currentPage === 'order_detail' && currentParam && (
+            <OrderDetailPage orderId={currentParam} onBack={() => handleNavigate('orders')} />
+          )}
+        </div>
       </main>
 
       {/* Bottom Navigation */}
@@ -143,18 +183,15 @@ export default function Layout() {
           <span className="dock-label">Pedidos</span>
         </button>
         <button
-          onClick={() => handleNavigate('production')}
-          className={currentPage === 'production' ? 'dock-active' : ''}
+          onClick={() => handleNavigate('more')}
+          className={isMoreActive ? 'dock-active' : ''}
         >
-          <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" strokeLinejoin="miter" strokeLinecap="butt"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="2"></circle><path d="m22,13.25v-2.5l-2.318-.966c-.167-.581-.395-1.135-.682-1.654l.954-2.318-1.768-1.768-2.318.954c-.518-.287-1.073-.515-1.654-.682l-.966-2.318h-2.5l-.966,2.318c-.581.167-1.135.395-1.654.682l-2.318-.954-1.768,1.768.954,2.318c-.287.518-.515,1.073-.682,1.654l-2.318.966v2.5l2.318.966c.167.581.395,1.135.682,1.654l-.954,2.318,1.768,1.768,2.318-.954c.518.287,1.073.515,1.654.682l.966,2.318h2.5l.966-2.318c.581-.167,1.135-.395,1.654-.682l2.318.954,1.768-1.768-.954-2.318c.287-.518.515-1.073.682-1.654l2.318-.966Z" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="2"></path></g></svg>
-          <span className="dock-label">Produção</span>
-        </button>
-        <button
-          onClick={() => handleNavigate('inventory')}
-          className={currentPage === 'inventory' ? 'dock-active' : ''}
-        >
-          <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></g></svg>
-          <span className="dock-label">Estoque</span>
+          <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="12" r="2"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+            <circle cx="19" cy="12" r="2"></circle>
+          </svg>
+          <span className="dock-label">Mais</span>
         </button>
       </nav>
     </div>

@@ -19,3 +19,75 @@ html[data-theme='sunset'] {
 body {
   @apply bg-base-200 text-base-content;
 }
+
+.main-content-bg, .navbar {
+  @apply bg-base-200;
+}
+
+html[data-theme='sunset'] .main-content-bg,
+html[data-theme='sunset'] .navbar {
+  @apply bg-base-300;
+}
+
+.page-transition {
+  animation-duration: 220ms;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.page-transition-forward {
+  animation-name: page-enter-forward;
+}
+
+.page-transition-back {
+  animation-name: page-enter-back;
+}
+
+.page-transition-neutral {
+  animation-name: page-enter-neutral;
+  animation-duration: 160ms;
+}
+
+@keyframes page-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes page-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes page-enter-neutral {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    animation: none;
+    will-change: auto;
+  }
+}
