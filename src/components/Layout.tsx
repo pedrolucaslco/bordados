@@ -11,6 +11,7 @@ import OrderDetailPage from '@/pages/OrderDetail'
 import CalendarPage from '@/pages/Calendar'
 import SettingsPage from '@/pages/Settings'
 import MorePage from '@/pages/More'
+import { useAppUpdate } from '@/services/useAppUpdate'
 
 type TransitionDirection = 'forward' | 'back' | 'neutral'
 
@@ -35,6 +36,7 @@ export default function Layout() {
   const [transitionDirection, setTransitionDirection] = useState<TransitionDirection>('neutral')
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [pendingSyncCount, setPendingSyncCount] = useState(0)
+  const { appUpdate, checkUpdate, refreshApp } = useAppUpdate()
   const { logout } = useAuthStore()
 
   useEffect(() => {
@@ -94,9 +96,9 @@ export default function Layout() {
   const isMoreActive = currentPage === 'more' || isMoreSubPage
 
   return (
-    <div className="flex flex-col h-screen bg-base-300">
+    <div className="app-shell flex flex-col bg-base-300">
       {/* Header */}
-      <header className="navbar border-b border-b-base-300 z-50">
+      <header className="app-header navbar border-b border-b-base-300 z-50">
         <div className="flex-1">
           {isMoreSubPage ? (
             <button className="btn btn-ghost gap-2 normal-case" onClick={() => handleNavigate('more')}>
@@ -128,7 +130,7 @@ export default function Layout() {
       </header>
 
       {/* Main Content */}
-      <main className="main-content-bg flex-1 overflow-y-auto pb-24">
+      <main className="app-main main-content-bg flex-1 overflow-y-auto">
         <div
           key={`${currentPage}-${currentParam || ''}`}
           className={`page-transition page-transition-${transitionDirection} min-h-full`}
@@ -148,6 +150,9 @@ export default function Layout() {
               onNavigate={handleNavigate}
               onLogout={handleLogout}
               isLogoutDisabled={pendingSyncCount > 0}
+              appUpdate={appUpdate}
+              onCheckUpdate={checkUpdate}
+              onRefreshApp={refreshApp}
             />
           )}
           {currentPage === 'settings' && (
@@ -160,7 +165,7 @@ export default function Layout() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="dock">
+      <nav className="app-dock dock">
         <button
           onClick={() => handleNavigate('dashboard')}
           className={currentPage === 'dashboard' ? 'dock-active' : ''}

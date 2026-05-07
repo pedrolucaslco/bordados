@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react'
+import type { AppUpdateState } from '@/services/appUpdate'
 
 interface MorePageProps {
   onNavigate: (page: string, param?: string) => void
   onLogout: () => void
+  appUpdate: AppUpdateState
+  onCheckUpdate: () => Promise<AppUpdateState>
+  onRefreshApp: () => Promise<void>
   isLogoutDisabled?: boolean
 }
 
@@ -130,6 +134,68 @@ function LogoutIcon() {
   )
 }
 
+function UpdateIcon() {
+  return (
+    <IconBox>
+      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 12a9 9 0 0 1-15.1 6.6" />
+        <path d="M3 12A9 9 0 0 1 18.1 5.4" />
+        <path d="M21 5v7h-7" />
+        <path d="M3 19v-7h7" />
+      </svg>
+    </IconBox>
+  )
+}
+
+function getUpdateDescription(appUpdate: AppUpdateState) {
+  if (appUpdate.status === 'checking') return 'Verificando atualização disponível'
+  if (appUpdate.status === 'available') return 'Nova versão disponível'
+  if (appUpdate.status === 'offline') return 'Conecte-se à internet para atualizar'
+  if (appUpdate.status === 'refreshing') return 'Limpando cache e recarregando'
+  if (appUpdate.status === 'error') return appUpdate.errorMessage || 'Não foi possível verificar agora'
+  if (appUpdate.status === 'upToDate') return `Atualizado (${appUpdate.currentCommit.slice(0, 7)})`
+  return 'Limpar cache e buscar nova versão'
+}
+
+function UpdateAppButton({
+  appUpdate,
+  onCheckUpdate,
+  onRefreshApp,
+}: {
+  appUpdate: AppUpdateState
+  onCheckUpdate: MorePageProps['onCheckUpdate']
+  onRefreshApp: MorePageProps['onRefreshApp']
+}) {
+  const isBusy = appUpdate.status === 'checking' || appUpdate.status === 'refreshing'
+  const isDisabled = isBusy || appUpdate.status === 'offline'
+
+  const handleClick = async () => {
+    const result = await onCheckUpdate()
+    if (result.status !== 'offline') {
+      await onRefreshApp()
+    }
+  }
+
+  return (
+    <button
+      className="flex w-full items-center justify-between gap-4 p-4 text-left disabled:opacity-60"
+      onClick={handleClick}
+      disabled={isDisabled}
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <UpdateIcon />
+        <span className="min-w-0">
+          <span className="block font-medium">Atualizar app</span>
+          <span className="block truncate text-sm text-base-content/60">
+            {getUpdateDescription(appUpdate)}
+          </span>
+        </span>
+      </span>
+      {isBusy ? <span className="loading loading-spinner loading-sm text-primary" /> : <ChevronRightIcon />}
+    </button>
+  )
+}
+
 const systemItems: MoreItem[] = [
   {
     page: 'settings',
@@ -146,7 +212,14 @@ const systemItems: MoreItem[] = [
   },
 ]
 
-export default function MorePage({ onNavigate, onLogout, isLogoutDisabled = false }: MorePageProps) {
+export default function MorePage({
+  onNavigate,
+  onLogout,
+  appUpdate,
+  onCheckUpdate,
+  onRefreshApp,
+  isLogoutDisabled = false,
+}: MorePageProps) {
   return (
     <div className="p-4 pb-24">
       <div className="mb-6">
@@ -175,6 +248,11 @@ export default function MorePage({ onNavigate, onLogout, isLogoutDisabled = fals
         <div className="card bg-base-100 shadow-sm">
           <div className="divide-y divide-base-200">
             <MoreListRows items={systemItems} onNavigate={onNavigate} />
+            <UpdateAppButton
+              appUpdate={appUpdate}
+              onCheckUpdate={onCheckUpdate}
+              onRefreshApp={onRefreshApp}
+            />
             <button
               className="flex w-full items-center justify-between gap-4 p-4 text-left text-error disabled:opacity-60"
               onClick={onLogout}

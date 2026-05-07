@@ -14,6 +14,14 @@ interface ServiceWorkerFetchEvent extends Event {
   respondWith(response: Promise<Response>): void
 }
 
+interface ServiceWorkerMessageEvent extends Event {
+  data: {
+    type?: string
+  }
+  ports: readonly MessagePort[]
+  waitUntil(promise: Promise<unknown>): void
+}
+
 const serviceWorker = self as unknown as {
   skipWaiting(): void
   clients: {
@@ -21,10 +29,12 @@ const serviceWorker = self as unknown as {
   }
   addEventListener(type: 'activate', listener: (event: ServiceWorkerLifecycleEvent) => void): void
   addEventListener(type: 'fetch', listener: (event: ServiceWorkerFetchEvent) => void): void
+  addEventListener(type: 'message', listener: (event: ServiceWorkerMessageEvent) => void): void
 }
 
-const SW_VERSION = 'v2'
-const CACHE_PREFIX = `my-app-${SW_VERSION}`
+const CACHE_PREFIX = `bordados-${__APP_BUILD_SHORT_COMMIT__ || 'dev'}`
+const ACTIVATION_CACHE_PREFIXES = ['bordados-', 'my-app-', 'google-fonts-cache', 'gstatic-fonts-cache']
+const MANUAL_CLEAR_CACHE_PREFIXES = [...ACTIVATION_CACHE_PREFIXES, 'workbox-']
 
 serviceWorker.skipWaiting()
 
@@ -63,7 +73,7 @@ serviceWorker.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) =>
       Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName.startsWith('my-app-'))
+          .filter((cacheName) => ACTIVATION_CACHE_PREFIXES.some((prefix) => cacheName.startsWith(prefix)))
           .filter((cacheName) => !cacheName.startsWith(CACHE_PREFIX))
           .map((cacheName) => caches.delete(cacheName))
       )
@@ -71,6 +81,24 @@ serviceWorker.addEventListener('activate', (event) => {
   )
 
   serviceWorker.clients.claim()
+})
+
+serviceWorker.addEventListener('message', (event) => {
+  if (event.data?.type !== 'CLEAR_APP_CACHES') return
+
+  event.waitUntil(
+    caches.keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter((cacheName) => MANUAL_CLEAR_CACHE_PREFIXES.some((prefix) => cacheName.startsWith(prefix)))
+            .map((cacheName) => caches.delete(cacheName))
+        )
+      )
+      .then(() => {
+        event.ports[0]?.postMessage({ type: 'APP_CACHES_CLEARED' })
+      })
+  )
 })
 
 serviceWorker.addEventListener('fetch', (event) => {

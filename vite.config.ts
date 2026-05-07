@@ -2,13 +2,78 @@ import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'path'
+
+function getCommitFromGitFiles() {
+  const gitHeadPath = path.resolve(__dirname, '.git/HEAD')
+  if (!existsSync(gitHeadPath)) return 'dev'
+
+  const head = readFileSync(gitHeadPath, 'utf8').trim()
+  if (!head.startsWith('ref:')) return head
+
+  const refPath = path.resolve(__dirname, '.git', head.replace('ref:', '').trim())
+  if (existsSync(refPath)) {
+    return readFileSync(refPath, 'utf8').trim()
+  }
+
+  const packedRefsPath = path.resolve(__dirname, '.git/packed-refs')
+  if (!existsSync(packedRefsPath)) return 'dev'
+
+  const refName = head.replace('ref:', '').trim()
+  const packedRefLine = readFileSync(packedRefsPath, 'utf8')
+    .split('\n')
+    .find((line) => line.endsWith(` ${refName}`))
+
+  return packedRefLine?.split(' ')[0] || 'dev'
+}
+
+function getBuildCommit() {
+  const commit = process.env.VERCEL_GIT_COMMIT_SHA
+    || process.env.GITHUB_SHA
+    || process.env.CF_PAGES_COMMIT_SHA
+    || process.env.COMMIT_REF
+    || getCommitFromGitFiles()
+
+  return {
+    commit,
+    shortCommit: commit.slice(0, 7),
+    builtAt: new Date().toISOString(),
+  }
+}
+
+const buildInfo = getBuildCommit()
+
+function appBuildManifestPlugin() {
+  return {
+    name: 'app-build-manifest',
+    configureServer(server) {
+      server.middlewares.use('/app-build.json', (_request, response) => {
+        response.setHeader('Content-Type', 'application/json')
+        response.setHeader('Cache-Control', 'no-store')
+        response.end(`${JSON.stringify(buildInfo, null, 2)}\n`)
+      })
+    },
+    writeBundle() {
+      writeFileSync(
+        path.resolve(__dirname, 'dist/app-build.json'),
+        `${JSON.stringify(buildInfo, null, 2)}\n`
+      )
+    },
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_BUILD_COMMIT__: JSON.stringify(buildInfo.commit),
+    __APP_BUILD_SHORT_COMMIT__: JSON.stringify(buildInfo.shortCommit),
+    __APP_BUILD_BUILT_AT__: JSON.stringify(buildInfo.builtAt),
+  },
   plugins: [
     tailwindcss(),
     react(),
+    appBuildManifestPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       strategies: 'injectManifest',
